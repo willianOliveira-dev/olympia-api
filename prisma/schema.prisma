@@ -1,0 +1,274 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// uuidv7 - identificadores únicos com ordenação temporal 
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+  SELLER
+}
+
+enum SenderType {
+  USER
+  SELLER
+}
+
+enum OrderStatus {
+  COMPLETED
+  PENDING
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model User {
+  id                  String               @id
+  email               String               @unique
+  username            String               @unique
+  password            String?
+  firstName           String?
+  lastName            String?
+  avatar              String?
+  emailVerified       DateTime?
+  phone               String?
+  role                Role                 @default(USER)
+  isSeller            Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  // Relacionamento à autenticação social e sessões
+  accounts            Account[]
+  sessions            Session[]
+  // Para senha e verificação
+  passwordResetTokens PasswordResetToken[]
+  verificationTokens  VerificationToken[]
+  // Para relacionar com Seller
+  seller              Seller?
+  sellerId            String?
+  // Relacionamento com pedidos, carrinho etc
+  orders              Order[]
+  cart                Cart?
+  // Relacionamento com Endereço
+  address             Address[]
+  // Relacionamento com Conversation
+  conversations       Conversation[] // <-- lado inverso da relação com Conversation
+}
+
+model Address {
+  id           String   @id
+  landlord     String
+  phoneNumber  String
+  label        String // Ex: Casa, Trabalho...
+  street       String
+  number       Int
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  zipCode      String
+  isDefault    Boolean  @default(false) // Endereço principal
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sellerId     String?
+  seller       Seller?  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String  @id
+  userId            String
+  type              String // e.g. "oauth", "email"
+  provider          String // e.g. "google", "facebook"
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id
+  sessionToken String   @unique
+  expires      DateTime
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id      String   @id
+  token   String   @unique
+  expires DateTime
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id         String   @id
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  user       User?    @relation(fields: [identifier], references: [email], onDelete: Cascade)
+}
+
+model Seller {
+  id                    String   @id
+  storeName             String
+  cnpj                  String    @unique // Cadastro Nacional da Pessoa Jurídica (Brasil)
+  companyName           String  // Razão social
+  taxRegime             String  // Regime Tributário (MEI)
+  stateRegistration     String // Inscrição estadual
+  municipalRegistration String? // Inscrição municipal
+  businessEmail         String? // E-mail comercial
+  phoneNumber           String? // Telefone de contato
+  website               String? // Site da loja (opcional)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products      Product[]
+  address       Address[] // endereço comercial
+  conversations Conversation[] // <-- lado inverso da relação com Conversation
+}
+
+model Category {
+  id        String            @id
+  name      String            @unique
+  products  ProductCategory[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model Product {
+  id           String            @id
+  name         String
+  description  String?
+  price        Int
+  sellerId     String
+  seller       Seller            @relation(fields: [sellerId], references: [id])
+  categories   ProductCategory[]
+  orderItems   OrderItem[]
+  cartItems    CartItem[]
+  productImage ProductImage[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model ProductImage {
+  id        String   @id
+  url       String
+  altText   String?
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order     Int      @default(0) // Para ordenar imagens
+  createdAt DateTime @default(now())
+}
+
+model ProductCategory {
+  id         String   @id
+  productId  String
+  categoryId String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}
+
+model Cart {
+  id     String     @id
+  userId String     @unique
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items  CartItem[]
+}
+
+model CartItem {
+  id        String  @id
+  cartId    String
+  productId String
+  quantity  Int
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id        String      @id
+  userId    String
+  status    OrderStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     OrderItem[]
+  payment   Payment?
+}
+
+model OrderItem {
+  id        String  @id
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Payment {
+  id        String        @id
+  orderId   String        @unique
+  status    PaymentStatus
+  amount    Float
+  paidAt    DateTime?
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  updatedAt DateTime      @updatedAt
+}
+
+model Conversation {
+  id        String    @id
+  // Participantes: usuário e vendedor (podem ser User e Seller, ou User com o campo role)
+  userId    String
+  sellerId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  // Relacionamentos
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seller    Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  // Uma conversa única entre userId e sellerId, evitar duplicidade
+  @@unique([userId, sellerId])
+  @@index([userId])
+  @@index([sellerId])
+}
+
+model Message {
+  id             String       @id
+  conversationId String
+  SenderType     SenderType
+  senderId       String // Pode ser usuário ou vendedor (id da tabela User)
+  content        String
+  sentAt         DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime     @updatedAt
+
+  @@index([conversationId])
+}
