@@ -133,7 +133,12 @@ CREATE TABLE "Category" (
 CREATE TABLE "Product" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "description" TEXT,
+    "brand" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "isFeatured" BOOLEAN NOT NULL DEFAULT false,
+    "quantity" INTEGER NOT NULL DEFAULT 0,
+    "discountPercentage" DOUBLE PRECISION,
+    "discountEndDate" TIMESTAMP(3),
     "price" INTEGER NOT NULL,
     "sellerId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

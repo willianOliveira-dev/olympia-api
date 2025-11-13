@@ -165,7 +165,12 @@ model Category {
 model Product {
   id           String            @id
   name         String
-  description  String?
+  brand        String
+  description  String
+  isFeatured   Boolean           @default(false)
+  quantity     Int               @default(0)
+  discountPercentage Float?
+  discountEndDate    DateTime?   
   price        Int
   sellerId     String
   seller       Seller            @relation(fields: [sellerId], references: [id])
