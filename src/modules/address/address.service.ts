@@ -13,6 +13,24 @@ export class AddressService {
         return { address };
     }
 
+    async hasDefaultAddress(
+        { isDefault }: CreateAddressDto | UpdateAddressDto,
+        ownerId: string,
+        ownerType: OwnerTypeOptions
+    ) {
+        const hasDefault = await this.repo.hasDefaultAddress(
+            ownerId,
+            ownerType
+        );
+
+        if (hasDefault && isDefault) {
+            throw new HttpException(
+                'Não é possível ter mais de um endereço padrão',
+                HttpStatus.CONFLICT
+            );
+        }
+    }
+
     async findOne(
         addressId: string,
         ownerId: string,
@@ -22,7 +40,7 @@ export class AddressService {
 
         if (!address) {
             throw new HttpException(
-                'Endereço não encontrado.',
+                'Endereço não encontrado',
                 HttpStatus.NOT_FOUND
             );
         }
@@ -34,6 +52,12 @@ export class AddressService {
         ownerId: string,
         ownerType: OwnerTypeOptions
     ) {
+        
+        await this.hasDefaultAddress(
+            { isDefault: createAddressDto.isDefault },
+            ownerId,
+            ownerType
+        );
         const ownerField = this.repo.getOwnerField(ownerType);
 
         const newAddress = {

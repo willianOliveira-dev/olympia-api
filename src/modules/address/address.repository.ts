@@ -41,8 +41,16 @@ export class AddressRepository {
         });
     }
 
-    async hasDefaultAddress() {
-        
+    async hasDefaultAddress(ownerId: string, ownerType: OwnerTypeOptions) {
+        const ownerField = this.getOwnerField(ownerType);
+        const addressCount = await this.prisma.address.count({
+            where: {
+                [ownerField]: ownerId,
+                isDefault: true,
+            },
+        });
+
+        return addressCount > 0;
     }
 
     async create(

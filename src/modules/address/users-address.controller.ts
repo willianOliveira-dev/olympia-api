@@ -26,7 +26,7 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 import { AddressEntity } from './entities/address.entity';
 import { ApiResponseComposition } from 'src/helpers/api-response';
 
-const userId = '019a7342-039a-7203-8fd4-54a8641ed2c6';
+const userId = '019a7f50-4b57-7b15-913b-9be40fbb719d';
 
 @ApiTags('users-address')
 @Controller('users/address')
@@ -101,11 +101,8 @@ export class UsersAddressController {
             statusCode: 201,
         }),
     })
-    @ApiBadRequestResponse({
-        description: 'Os dados enviados estão incorretos.',
-    })
     @ApiConflictResponse({
-        description: 'O endereço já existe.',
+        description: 'Não é possível ter mais de um endereço padrão.',
     })
     @ApiInternalServerErrorResponse({
         description: 'Erro interno ao criar o endereço.',
@@ -164,11 +161,11 @@ export class UsersAddressController {
     @Delete(':id')
     @ApiOperation({ summary: 'Deletar um endereço do usuário' })
     @ApiOkResponse({
-        description: 'Endereço removido com sucesso.',
+        description: 'Endereço delado com sucesso.',
         type: ApiResponseComposition<AddressEntity>({
             type: 'address',
             nameForSwagger: 'AddressDeleteSuccessResponse',
-            message: 'Endereço removido com sucesso.',
+            message: 'Endereço deletado com sucesso.',
             statusCode: 200,
         }),
     })

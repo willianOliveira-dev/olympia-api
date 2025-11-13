@@ -26,7 +26,7 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 import { AddressEntity } from './entities/address.entity';
 import { ApiResponseComposition } from 'src/helpers/api-response';
 
-const sellerId = '019a5620-428c-7b28-a5db-9612e5ec52b9';
+const sellerId = '019a7f51-1b89-7fa5-9351-246a73d841f7';
 
 @ApiTags('sellers-address')
 @Controller('sellers/address')
@@ -104,11 +104,8 @@ export class SellersAddressController {
             statusCode: 201,
         }),
     })
-    @ApiBadRequestResponse({
-        description: 'Os dados enviados estão incorretos.',
-    })
     @ApiConflictResponse({
-        description: 'O endereço já existe.',
+        description: 'Não é possível ter mais de um endereço padrão.',
     })
     @ApiInternalServerErrorResponse({
         description: 'Erro interno ao criar o endereço.',
@@ -170,7 +167,7 @@ export class SellersAddressController {
         type: ApiResponseComposition<AddressEntity>({
             type: 'address',
             nameForSwagger: 'SellerAddressDeleteSuccessResponse',
-            message: 'Endereço removido com sucesso.',
+            message: 'Endereço delatado com sucesso.',
             statusCode: 200,
         }),
     })
