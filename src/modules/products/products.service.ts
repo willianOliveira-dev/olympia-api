@@ -4,6 +4,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductFilterDto } from 'src/common/dto/product-filter.dto';
 import { ProductFilterLimitDto } from 'src/common/dto/productFilterLimit.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 const DEFAULT_LIMIT = 45;
 const MAX_LIMIT = 60;
@@ -104,6 +105,21 @@ export class ProductsService {
             order: filter.order as 'asc' | 'desc',
             orderBy: filter.orderBy as 'price' | 'createdAt',
         });
+
+        return { product: products, total, offset, limit };
+    }
+
+    async findBySeller(sellerId: string, p: PaginationDto) {
+        await this.existingSeller(sellerId);
+
+        const limit = this.normalizeLimit(p.limit);
+        const offset = p.offset ?? 0;
+
+        const { products, total } = await this.repo.findBySeller(
+            sellerId,
+            offset,
+            limit
+        );
 
         return { product: products, total, offset, limit };
     }

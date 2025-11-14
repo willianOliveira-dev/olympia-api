@@ -129,6 +129,29 @@ export class ProductsRespository {
         return { products, total };
     }
 
+    // Buscar produtos do Vendedor
+    async findBySeller(sellerId: string, skip: number, take: number) {
+        const products = await this.prisma.product.findMany({
+            where: {
+                sellerId,
+            },
+            take,
+            skip,
+            include: {
+                categories: {
+                    include: {
+                        category: true,
+                    },
+                },
+                seller: true,
+                productImage: true,
+            },
+        });
+
+        const total = await this.prisma.product.count({ where: { sellerId } });
+        return { products, total };
+    }
+
     // Novos Lançamentos
     async findNew(take: number) {
         return this.prisma.product.findMany({
